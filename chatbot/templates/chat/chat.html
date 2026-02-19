@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+{% block title %}Chat | AI Chatbot{% endblock %}
+
+{% block content %}
+
+<!-- Back Button -->
+<div class="mb-6">
+    <button onclick="history.back()"
+            class="flex items-center gap-2 text-sm
+                   hover:text-[#00ADB5] transition">
+        <i data-lucide="arrow-left" class="w-4 h-4 icon-hover"></i>
+        Back
+    </button>
+</div>
+
+<section class="max-w-4xl mx-auto">
+
+    <!-- Chat Container -->
+    <div class="bg-[#393E46]
+                border border-[#00ADB5]/30
+                rounded-3xl shadow-xl
+                flex flex-col h-[75vh] overflow-hidden">
+
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-[#00ADB5]/20
+                    flex items-center justify-between">
+
+            <div class="flex items-center gap-2">
+                <i data-lucide="message-circle"
+                   class="w-5 h-5 text-[#00ADB5] icon-hover"></i>
+                <h2 class="text-lg font-bold">
+                    AI Chatbot
+                </h2>
+            </div>
+
+            <!-- ✅ ADDED: counter + existing badge -->
+            <div class="flex items-center gap-2">
+
+                <span id="request-counter"
+                      class="flex items-center gap-1 text-xs
+                             px-3 py-1 rounded-full
+                             bg-[#222831]
+                             border border-[#00ADB5]/30
+                             text-[#00ADB5]">
+                    <i data-lucide="zap" class="w-3 h-3"></i>
+                    <span id="counter-text">{{ remaining_requests }} left today</span>
+                </span>
+
+                <span class="flex items-center gap-1 text-xs
+                             px-3 py-1 rounded-full
+                             bg-[#222831]
+                             border border-[#00ADB5]/30
+                             text-[#00ADB5]">
+                    <i data-lucide="activity" class="w-3 h-3"></i>
+                    Online & Learning
+                </span>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="chat-box"
+             class="flex-1 overflow-y-auto px-6 py-6 space-y-8
+                    bg-[#222831]">
+
+            <!-- Welcome message -->
+            <div class="flex justify-start">
+                <div class="flex gap-3 max-w-md">
+
+                    <div class="w-8 h-8 rounded-full
+                                bg-[#00ADB5] text-black
+                                flex items-center justify-center text-sm flex-shrink-0">
+                        <i data-lucide="bot" class="w-4 h-4"></i>
+                    </div>
+
+                    <div class="bg-[#393E46]
+                                border border-[#00ADB5]/30
+                                px-4 py-3 rounded-2xl shadow-sm
+                                max-w-md">
+                        Hello 👋 I'm your AI assistant.
+                        Ask me anything!
+                    </div>
+                </div>
+            </div>
+            <!-- ✅ ADD THIS TIP BELOW -->
+            <div class="flex justify-start">
+                <div class="flex gap-3 max-w-md">
+                    <div class="w-8 h-8 rounded-full
+                                bg-[#393E46]
+                                border border-[#00ADB5]/30
+                                flex items-center justify-center text-sm flex-shrink-0">
+                        💡
+                    </div>
+                    <div class="bg-[#393E46]
+                                border border-yellow-500/30
+                                px-4 py-3 rounded-2xl shadow-sm
+                                max-w-md text-sm text-yellow-300">
+                        <strong>Tip:</strong> Ask one question at a time for the best results.
+                        
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ✅ CHANGED: items-center → items-end so button aligns bottom when textarea grows -->
+        <form id="chat-form"
+              class="border-t border-[#00ADB5]/20
+                     bg-[#393E46]
+                     px-4 py-4 flex items-end gap-3">
+
+            {% csrf_token %}
+
+            <!-- ✅ CHANGED: input → textarea -->
+            <textarea id="message-input"
+                   placeholder="Type your message... (Shift+Enter for new line)"
+                   rows="1"
+                   class="flex-1 px-4 py-3 rounded-xl
+                          bg-[#222831]
+                          border border-[#00ADB5]/30
+                          text-[#EEEEEE]
+                          placeholder-gray-500
+                          focus:outline-none
+                          focus:border-[#00ADB5]
+                          focus:ring-1 focus:ring-[#00ADB5]
+                          resize-none overflow-hidden
+                          leading-relaxed"
+                   autocomplete="off"></textarea>
+
+            <button type="submit"
+                    id="send-btn"
+                    class="px-6 py-3
+                           bg-[#00ADB5] text-black
+                           rounded-xl font-semibold
+                           border border-[#00ADB5]
+                           hover:bg-[#00c7d1]
+                           active:scale-95
+                           transition
+                           flex-shrink-0
+                           cursor-pointer
+                           disabled:opacity-60
+                           disabled:cursor-not-allowed">
+                Send
+            </button>
+        </form>
+
+    </div>
+
+</section>
+
+<!-- ✅ Marked.js for markdown rendering -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+
+<script>
+const chatForm = document.getElementById("chat-form");
+const chatBox = document.getElementById("chat-box");
+const input = document.getElementById("message-input");
+const sendBtn = document.getElementById("send-btn");
+
+// ✅ Configure marked.js
+marked.setOptions({
+    breaks: true,       // Convert \n to <br>
+    gfm: true,          // GitHub Flavored Markdown
+});
+
+// Get CSRF token
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+// Escape HTML for user messages only
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// ✅ ADDED: Update request counter
+function updateCounter(remaining) {
+    if (remaining === undefined || remaining === null) return;
+    const counter = document.getElementById("request-counter");
+    const text = document.getElementById("counter-text");
+    if (remaining === 0) {
+        text.textContent = "0 left — resets tomorrow";
+    } else {
+        text.textContent = `${remaining} left today`;
+    }
+    if (remaining <= 5) {
+        counter.classList.remove("border-[#00ADB5]/30", "text-[#00ADB5]");
+        counter.classList.add("border-red-500/30", "text-red-400");
+    } else {
+        counter.classList.remove("border-red-500/30", "text-red-400");
+        counter.classList.add("border-[#00ADB5]/30", "text-[#00ADB5]");
+    }
+}
+
+// ✅ Format bot response using marked.js + styled code blocks
+function formatBotResponse(text) {
+    // Use marked.js to parse markdown into HTML
+    let html = marked.parse(text);
+
+    // ✅ Style code blocks (```code```)
+    html = html.replace(
+        /<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>/g,
+        (match, lang, code) => {
+            const lines = code.trim().split('\n');
+            let lineHtml = lines.map((line, i) => `
+                <div class="flex gap-2">
+                    <span class="text-[#00ADB5] opacity-50 select-none min-w-[2rem] text-right flex-shrink-0">${i + 1}</span>
+                    <span class="text-[#EEEEEE]">${line}</span>
+                </div>`).join('');
+
+            return `
+                <div class="bg-[#1a1f26] border border-[#00ADB5]/40 rounded-lg p-3 my-3 overflow-x-auto font-mono text-sm leading-relaxed">
+                    <div class="text-[#00ADB5] font-bold text-xs uppercase mb-2">${lang.toUpperCase()}</div>
+                    ${lineHtml}
+                    <button onclick="copyCode(this)" class="mt-3 px-3 py-1 bg-[#00ADB5] text-[#222831] text-xs font-bold rounded hover:bg-[#00c7d1] transition cursor-pointer">📋 Copy Code</button>
+                </div>`;
+        }
+    );
+
+    // ✅ Style inline code blocks without language
+    html = html.replace(
+        /<pre><code>([\s\S]*?)<\/code><\/pre>/g,
+        (match, code) => {
+            const lines = code.trim().split('\n');
+            let lineHtml = lines.map((line, i) => `
+                <div class="flex gap-2">
+                    <span class="text-[#00ADB5] opacity-50 select-none min-w-[2rem] text-right flex-shrink-0">${i + 1}</span>
+                    <span class="text-[#EEEEEE]">${line}</span>
+                </div>`).join('');
+
+            return `
+                <div class="bg-[#1a1f26] border border-[#00ADB5]/40 rounded-lg p-3 my-3 overflow-x-auto font-mono text-sm leading-relaxed">
+                    <div class="text-[#00ADB5] font-bold text-xs uppercase mb-2">CODE</div>
+                    ${lineHtml}
+                    <button onclick="copyCode(this)" class="mt-3 px-3 py-1 bg-[#00ADB5] text-[#222831] text-xs font-bold rounded hover:bg-[#00c7d1] transition cursor-pointer">📋 Copy Code</button>
+                </div>`;
+        }
+    );
+
+    // ✅ Style headings
+    html = html.replace(/<h1>/g, '<h1 class="text-xl font-bold text-[#00ADB5] mt-4 mb-2">');
+    html = html.replace(/<h2>/g, '<h2 class="text-lg font-bold text-[#00ADB5] mt-4 mb-2">');
+    html = html.replace(/<h3>/g, '<h3 class="text-base font-semibold text-[#00ADB5] mt-3 mb-1">');
+    html = html.replace(/<h4>/g, '<h4 class="text-sm font-semibold text-[#EEEEEE] mt-3 mb-1">');
+
+    // ✅ Style paragraphs
+    html = html.replace(/<p>/g, '<p class="mb-3 text-[#EEEEEE] leading-relaxed">');
+
+    // ✅ Style lists
+    html = html.replace(/<ul>/g, '<ul class="list-disc ml-6 mb-3 space-y-1 text-[#EEEEEE]">');
+    html = html.replace(/<ol>/g, '<ol class="list-decimal ml-6 mb-3 space-y-1 text-[#EEEEEE]">');
+    html = html.replace(/<li>/g, '<li class="leading-relaxed">');
+
+    // ✅ Style inline code
+    html = html.replace(/<code>/g, '<code class="bg-[#1a1f26] px-1 py-0.5 rounded text-[#00ADB5] font-mono text-sm">');
+
+    // ✅ Style bold
+    html = html.replace(/<strong>/g, '<strong class="text-yellow-300 font-semibold">');
+
+    // ✅ Style horizontal rules (---)
+    html = html.replace(/<hr>/g, '<hr class="border-[#00ADB5]/20 my-4">');
+
+    return `<div class="text-[#EEEEEE]">${html}</div>`;
+}
+
+// ✅ Copy code button handler
+function copyCode(btn) {
+    const codeBlock = btn.closest('.bg-\\[\\#1a1f26\\]');
+    const lines = codeBlock.querySelectorAll('span.text-\\[\\#EEEEEE\\]');
+    let codeText = '';
+    lines.forEach(line => { codeText += line.textContent + '\n'; });
+
+    navigator.clipboard.writeText(codeText.trim()).then(() => {
+        const original = btn.textContent;
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => btn.textContent = original, 2000);
+    }).catch(err => console.error('Copy failed:', err));
+}
+
+// ✅ ADDED: Enter = send, Shift+Enter = new line
+input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        chatForm.dispatchEvent(new Event("submit"));
+    }
+});
+
+// ✅ ADDED: Auto-grow textarea as user types
+input.addEventListener("input", function () {
+    this.style.height = "auto";
+    this.style.height = Math.min(this.scrollHeight, 150) + "px";
+});
+
+// Handle form submission
+chatForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const message = input.value.trim();
+    if (!message) return;
+
+    // User message
+    chatBox.innerHTML += `
+        <div class="flex justify-end">
+            <div class="max-w-md bg-[#00ADB5] text-black
+                        px-4 py-3 rounded-2xl shadow
+                        border border-[#00ADB5]">
+                ${escapeHtml(message)}
+            </div>
+        </div>
+    `;
+
+    // ✅ ADDED: reset textarea height after send
+    input.value = "";
+    input.style.height = "auto";
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Typing indicator
+    const typingId = "typing-" + Date.now();
+    chatBox.innerHTML += `
+        <div id="${typingId}" class="flex justify-start">
+            <div class="flex gap-3 max-w-md">
+                <div class="w-8 h-8 rounded-full
+                            bg-[#00ADB5] text-black
+                            flex items-center justify-center text-sm flex-shrink-0">
+                    <i data-lucide="bot" class="w-4 h-4"></i>
+                </div>
+                <div class="bg-[#393E46]
+                            border border-[#00ADB5]/30
+                            px-4 py-3 rounded-2xl italic text-gray-400">
+                    Thinking...
+                </div>
+            </div>
+        </div>
+    `;
+    chatBox.scrollTop = chatBox.scrollHeight;
+    sendBtn.disabled = true;
+
+    const csrfToken = getCSRFToken();
+    const formData = new URLSearchParams();
+    formData.append('message', message);
+
+    fetch("{% url 'ajax_chat' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": csrfToken,
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById(typingId)?.remove();
+
+        if (data.error) {
+            chatBox.innerHTML += `
+                <div class="flex justify-start">
+                    <div class="flex gap-3 w-full">
+                        <div class="w-8 h-8 rounded-full bg-red-500 text-black flex items-center justify-center text-sm flex-shrink-0">⚠️</div>
+                        <div class="text-red-400">Error: ${escapeHtml(data.error)}</div>
+                    </div>
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return;
+        }
+
+        // ✅ Use new formatBotResponse with marked.js
+        const formattedResponse = formatBotResponse(data.bot_response);
+
+        chatBox.innerHTML += `
+            <div class="flex justify-start">
+                <div class="flex gap-3 w-full">
+                    <div class="w-8 h-8 rounded-full
+                                bg-[#00ADB5] text-black
+                                flex items-center justify-center text-sm flex-shrink-0">
+                        <i data-lucide="bot" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        ${formattedResponse}
+                    </div>
+                </div>
+            </div>
+        `;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // ✅ ADDED: Update counter from response
+        updateCounter(data.remaining_requests);
+
+        // Re-init lucide icons for new bot icon
+        if (window.lucide) lucide.createIcons();
+    })
+    .catch(err => {
+        document.getElementById(typingId)?.remove();
+        console.error('Error:', err);
+    })
+    .finally(() => {
+        sendBtn.disabled = false;
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% block title %}Chat History | AI Chatbot{% endblock %}
+
+{% block content %}
+
+<!-- Back Button -->
+<div class="mb-6">
+    <button onclick="history.back()"
+            class="flex items-center gap-2 text-sm
+                   hover:text-[#00ADB5] transition">
+        <i data-lucide="arrow-left" class="w-4 h-4 icon-hover"></i>
+        Back
+    </button>
+</div>
+
+<section class="max-w-5xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-10 border-b border-[#00ADB5]/20 pb-6">
+        <h2 class="text-3xl font-extrabold flex items-center gap-3">
+            <i data-lucide="clock"
+               class="w-7 h-7 text-[#00ADB5] icon-hover"></i>
+            Chat History
+        </h2>
+        <p class="text-gray-300 mt-2">
+            Review your previous conversations with the AI
+        </p>
+    </div>
+
+    {% if chats %}
+        <div class="space-y-8">
+
+            {% for chat in chats %}
+                <div class="bg-[#393E46]
+                            border border-[#00ADB5]/30
+                            rounded-2xl shadow-lg
+                            p-6 transition">
+
+                    <!-- Timestamp -->
+                    <div class="flex items-center justify-between mb-5">
+                        <span class="text-sm text-gray-400">
+                            {{ chat.created_at|date:"M d, Y • H:i" }}
+                        </span>
+
+                        <span class="flex items-center gap-1
+                                     text-xs px-3 py-1 rounded-full
+                                     bg-[#222831]
+                                     border border-[#00ADB5]/30
+                                     text-[#00ADB5]">
+                            <i data-lucide="message-square" class="w-3 h-3"></i>
+                            Conversation
+                        </span>
+                    </div>
+
+                    <!-- User Message -->
+                    <div class="mb-6 flex justify-end">
+                        <div class="max-w-2xl
+                                    bg-[#00ADB5] text-black
+                                    px-4 py-3 rounded-2xl
+                                    border border-[#00ADB5]
+                                    shadow">
+                            <p class="text-sm font-semibold mb-2">
+                                You
+                            </p>
+                            <p class="leading-relaxed break-words">
+                                {{ chat.user_message }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Bot Message -->
+                    <div class="flex justify-start">
+                        <div class="max-w-4xl
+                                    bg-[#222831]
+                                    border border-[#00ADB5]/30
+                                    px-6 py-4 rounded-2xl
+                                    shadow-sm
+                                    w-full">
+                            <p class="text-sm font-semibold
+                                      text-[#00ADB5] mb-4">
+                                AI Bot
+                            </p>
+                            <div id="response-{{ forloop.counter }}" class="text-[#EEEEEE] leading-relaxed whitespace-pre-wrap break-words">
+                                {{ chat.bot_response|escape }}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            {% endfor %}
+
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="bg-[#393E46]
+                    border-2 border-[#00ADB5]/40
+                    rounded-3xl shadow-lg
+                    p-14 text-center">
+
+            <i data-lucide="bot"
+               class="w-14 h-14 mx-auto mb-6
+                      text-[#00ADB5] icon-hover"></i>
+
+            <h3 class="text-2xl font-semibold mb-3">
+                No Conversations Yet
+            </h3>
+
+            <p class="text-gray-300 mb-8">
+                Start chatting with the AI to see your history here.
+            </p>
+
+            <a href="{% url 'chat' %}"
+               class="inline-flex items-center gap-2
+                      px-8 py-4 rounded-xl
+                      bg-[#00ADB5] text-black
+                      font-semibold
+                      border border-[#00ADB5]
+                      hover:bg-[#00c7d1]
+                      transition">
+                <i data-lucide="message-circle"
+                   class="w-5 h-5 icon-hover"></i>
+                Start Chatting
+            </a>
+
+        </div>
+    {% endif %}
+
+</section>
+
+<script>
+// Escape HTML
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Check if response is code
+function isCodeResponse(text) {
+    const codeLanguages = ["PYTHON", "JAVASCRIPT", "JAVA", "SQL", "HTML", "CSS", "PHP", "C++", "RUBY", "GO", "RUST", "BASH"];
+    return codeLanguages.some(lang => text.includes(`# ${lang} CODE`));
+}
+
+// Format code responses
+function formatCodeResponse(text) {
+    if (!isCodeResponse(text)) {
+        return formatDetailedResponse(text);
+    }
+
+    const lines = text.split('\n');
+    let header = '';
+    let codeLines = [];
+    let inCode = false;
+
+    for (let line of lines) {
+        if (line.startsWith('#')) {
+            header = line.replace('#', '').trim();
+            inCode = true;
+            continue;
+        }
+        if (inCode && line.trim()) {
+            const match = line.match(/^\s*(\d+)\|(.*)$/);
+            if (match) {
+                codeLines.push({
+                    number: match[1],
+                    content: match[2]
+                });
+            } else {
+                codeLines.push({
+                    number: codeLines.length + 1,
+                    content: line
+                });
+            }
+        }
+    }
+
+    let html = `<div class="bg-[#1a1f26] border border-[#00ADB5] rounded-lg p-3 my-4 overflow-x-auto font-mono text-sm text-[#EEEEEE] leading-tight">
+        <div class="text-[#00ADB5] font-bold text-xs uppercase mb-2">${escapeHtml(header)}</div>`;
+    
+    codeLines.forEach((lineObj) => {
+        const content = escapeHtml(lineObj.content);
+        html += `<div class="flex gap-0 my-0 py-0">
+            <span class="text-[#00ADB5] opacity-50 select-none mr-2 flex-shrink-0 min-w-8 text-right">${lineObj.number}</span>
+            <span class="text-[#EEEEEE] flex-1">${content}</span>
+        </div>`;
+    });
+
+    html += `<button class="mt-2 px-3 py-1 bg-[#00ADB5] text-[#222831] text-xs font-bold rounded hover:bg-[#00c7d1] active:scale-95 transition cursor-pointer" onclick="copyCode(event)">📋 Copy Code</button>
+    </div>`;
+    
+    return html;
+}
+
+// Format detailed responses
+function formatDetailedResponse(text) {
+    const lines = text.split('\n');
+    let html = '<div class="text-[#EEEEEE]">';
+    let listStack = []; // Track nested lists
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmedLine = line.trim();
+        
+        if (!trimmedLine) continue;
+        
+        // Calculate indent level
+        const indentLevel = (line.match(/^\s*/)[0].length) / 2; // Assume 2-space indent
+        
+        // Check if it's a header
+        if (trimmedLine.match(/^#{1,3}\s+(.+)/)) {
+            // Close any open lists
+            while (listStack.length > 0) {
+                html += '</ul>';
+                listStack.pop();
+            }
+            
+            const headerText = trimmedLine.replace(/^#+\s+/, '');
+            const level = trimmedLine.match(/^(#+)/)[1].length;
+            const headerSize = level === 1 ? 'text-2xl' : level === 2 ? 'text-xl' : 'text-lg';
+            html += `<h3 class="${headerSize} font-semibold text-[#EEEEEE] mt-6 mb-3">${escapeHtml(headerText)}</h3>`;
+        }
+        // Check if it's a code block
+        else if (trimmedLine.startsWith('```')) {
+            // Close any open lists
+            while (listStack.length > 0) {
+                html += '</ul>';
+                listStack.pop();
+            }
+            
+            const lang = trimmedLine.replace('```', '').trim() || 'code';
+            const codeLines = [];
+            i++;
+            
+            while (i < lines.length && !lines[i].trim().startsWith('```')) {
+                if (lines[i].trim()) {
+                    codeLines.push(lines[i].trim());
+                }
+                i++;
+            }
+            
+            html += `<div class="bg-[#1a1f26] border border-[#00ADB5] rounded-lg p-3 my-4 overflow-x-auto font-mono text-sm text-[#EEEEEE] leading-relaxed">
+                <div class="text-[#00ADB5] font-bold text-xs uppercase mb-2">${escapeHtml(lang)}</div>`;
+            
+            codeLines.forEach((codeLine, idx) => {
+                const content = escapeHtml(codeLine);
+                html += `<div class="flex gap-0 my-0 py-0">
+                    <span class="text-[#00ADB5] opacity-50 select-none mr-2 flex-shrink-0 min-w-8 text-right">${idx + 1}</span>
+                    <span class="text-[#EEEEEE] flex-1">${content}</span>
+                </div>`;
+            });
+            
+            html += `<button class="mt-2 px-3 py-1 bg-[#00ADB5] text-[#222831] text-xs font-bold rounded hover:bg-[#00c7d1] active:scale-95 transition cursor-pointer" onclick="copyCode(event)">📋 Copy Code</button>
+            </div>`;
+        }
+        // Check if it's a list item
+        else if (trimmedLine.match(/^[\*\-•]\s+/) || trimmedLine.match(/^\d+\.\s+/)) {
+            // Adjust list nesting based on indent level
+            while (listStack.length < indentLevel + 1) {
+                if (listStack.length > 0) {
+                    html += '<ul class="ml-6 space-y-1">';
+                } else {
+                    html += '<ul class="ml-6 mb-4 space-y-1">';
+                }
+                listStack.push(true);
+            }
+            while (listStack.length > indentLevel + 1) {
+                html += '</ul>';
+                listStack.pop();
+            }
+            
+            const content = trimmedLine.replace(/^[\*\-•]\s+/, '').replace(/^\d+\.\s+/, '').trim();
+            // Apply bold formatting
+            let processedContent = escapeHtml(content);
+            processedContent = processedContent.replace(/\*\*(.+?)\*\*/g, '<strong class="text-[#00ADB5] font-semibold">$1</strong>');
+            processedContent = processedContent.replace(/`(.+?)`/g, '<code class="bg-[#1a1f26] px-2 py-0.5 rounded text-[#00ADB5] font-mono text-sm">$1</code>');
+            html += `<li class="list-disc text-[#EEEEEE]">${processedContent}</li>`;
+        }
+        // Regular paragraph
+        else {
+            // Close any open lists
+            while (listStack.length > 0) {
+                html += '</ul>';
+                listStack.pop();
+            }
+            
+            let processedLine = escapeHtml(trimmedLine);
+            // Apply bold and code formatting
+            processedLine = processedLine.replace(/\*\*(.+?)\*\*/g, '<strong class="text-[#00ADB5] font-semibold">$1</strong>');
+            processedLine = processedLine.replace(/`(.+?)`/g, '<code class="bg-[#1a1f26] px-2 py-0.5 rounded text-[#00ADB5] font-mono text-sm">$1</code>');
+            
+            html += `<p class="mb-4 leading-relaxed text-[#EEEEEE]">${processedLine}</p>`;
+        }
+    }
+    
+    // Close any remaining open lists
+    while (listStack.length > 0) {
+        html += '</ul>';
+        listStack.pop();
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+// Copy code
+function copyCode(event) {
+    event.preventDefault();
+    const btn = event.target;
+    const codeBlock = btn.closest('.bg-\\[\\#1a1f26\\]');
+    const lines = codeBlock.querySelectorAll('span.text-\\[\\#EEEEEE\\].flex-1');
+    let codeText = '';
+    
+    lines.forEach(line => {
+        codeText += line.textContent + '\n';
+    });
+
+    navigator.clipboard.writeText(codeText).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => {
+            btn.textContent = originalText;
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+    });
+}
+
+// Format all responses on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const responseContainers = document.querySelectorAll('[id^="response-"]');
+    
+    responseContainers.forEach(container => {
+        const originalText = container.textContent.trim();
+        
+        if (originalText) {
+            const formatted = formatCodeResponse(originalText);
+            container.innerHTML = formatted;
+        }
+    });
+});
+</script>
+
+{% endblock %}

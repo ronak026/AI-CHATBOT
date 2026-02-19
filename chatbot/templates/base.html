@@ -1,0 +1,121 @@
+{% load static %} {% load tailwind_tags %}
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}AI Chatbot{% endblock %}</title>
+
+    {% tailwind_css %}
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Icon Animations -->
+    <style>
+      .icon-hover {
+        transition:
+          transform 0.2s ease,
+          color 0.2s ease;
+      }
+      .icon-hover:hover {
+        transform: scale(1.15) rotate(6deg);
+        color: #00adb5;
+      }
+      .pulse {
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.6;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="bg-[#222831] text-[#EEEEEE] min-h-screen flex flex-col">
+    <!-- ================= NAVBAR ================= -->
+    <header class="bg-[#393E46] border-b border-[#00ADB5]/30 sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="flex items-center justify-between h-16">
+          <!-- Logo -->
+          <a href="{% url 'home' %}" class="flex items-center gap-2">
+            <i data-lucide="bot" class="w-6 h-6 text-[#00ADB5] pulse"></i>
+            <span class="font-extrabold text-lg"> AI Chatbot </span>
+          </a>
+
+          <!-- Desktop Nav -->
+          <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
+            <a href="{% url 'home' %}" class="hover:text-[#00ADB5] transition">
+              Home
+            </a>
+            <a href="{% url 'chat' %}" class="hover:text-[#00ADB5] transition">
+              Chat
+            </a>
+            <a
+              href="{% url 'profile' %}"
+              class="hover:text-[#00ADB5] transition"
+            >
+              Profile
+            </a>
+            <a
+              href="{% url 'history' %}"
+              class="hover:text-[#00ADB5] transition"
+            >
+              History
+            </a>
+          </nav>
+
+          <!-- Auth Buttons -->
+          <div class="flex items-center gap-3">
+            {% if user.is_authenticated %}
+            <a
+              href="{% url 'logout' %}"
+              class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-semibold transition"
+            >
+              <i data-lucide="log-out" class="w-4 h-4 icon-hover"></i>
+              Logout
+            </a>
+            {% else %}
+            <a
+              href="{% url 'login' %}"
+              class="flex items-center gap-2 px-4 py-2 bg-[#00ADB5] hover:bg-[#00c7d1] text-black rounded-lg text-sm font-semibold transition"
+            >
+              <i data-lucide="log-in" class="w-4 h-4 icon-hover"></i>
+              Login
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ================= MAIN ================= -->
+    <main class="flex-grow max-w-7xl mx-auto w-full px-6 py-10">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- ================= FOOTER ================= -->
+    <footer class="bg-[#393E46] border-t border-[#00ADB5]/30">
+      <div
+        class="max-w-7xl mx-auto px-6 py-6 text-center text-sm text-gray-400"
+      >
+        © 2026
+        <span class="font-semibold text-[#00ADB5]"> AI Chatbot </span>
+        • Built with Django & Tailwind CSS
+      </div>
+    </footer>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

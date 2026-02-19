@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}Home | AI Chatbot{% endblock %}
+
+{% block content %}
+
+<!-- ================= HERO ================= -->
+<section class="relative py-28 text-center
+                bg-[#222831]
+                border border-[#00ADB9]/20 rounded-3xl">
+
+    <div class="max-w-5xl mx-auto">
+
+        <div class="inline-flex items-center gap-2 mb-6
+                    px-4 py-2 rounded-full
+                    bg-[#393E46]
+                    border border-[#00ADB5]/30 text-sm">
+            <i data-lucide="sparkles"
+               class="w-4 h-4 text-[#00ADB5] icon-hover"></i>
+            Smart • Friendly • Self-Learning
+        </div>
+
+        <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
+            Your AI Assistant that
+            <span id="typing-text"
+                  class="text-[#00ADB5]
+                         border-b-2 border-[#00ADB5] ml-2"></span>
+        </h1>
+
+        <p class="max-w-2xl mx-auto text-lg text-gray-300 mb-10">
+            Chat with an intelligent AI that answers questions,
+            learns from new ones, and becomes smarter over time.
+        </p>
+
+        <a href="{% url 'chat' %}"
+           class="inline-flex items-center gap-3
+                  px-10 py-4 rounded-xl
+                  bg-[#00ADB5] text-black
+                  font-semibold shadow-lg
+                  border border-[#00ADB5]
+                  hover:bg-[#00c7d1] transition">
+            <i data-lucide="message-circle"
+               class="w-5 h-5 icon-hover"></i>
+            Start Chatting
+        </a>
+
+    </div>
+</section>
+
+<!-- ================= FEATURES ================= -->
+<section class="py-24">
+
+    <h2 class="text-3xl md:text-4xl font-bold text-center mb-16">
+        Why Choose Our AI Chatbot?
+    </h2>
+
+    <div class="grid md:grid-cols-3 gap-10 max-w-6xl mx-auto">
+
+        <!-- Feature Card -->
+        <div class="bg-[#393E46] p-8 rounded-2xl
+                    border border-[#00ADB5]/20
+                    hover:border-[#00ADB5]/60
+                    shadow-lg transition text-center">
+            <i data-lucide="brain"
+               class="w-12 h-12 mx-auto mb-4
+                      text-[#00ADB5] icon-hover"></i>
+            <h3 class="text-xl font-semibold mb-2">
+                Intelligent Answers
+            </h3>
+            <p class="text-gray-300">
+                Uses NLP and knowledge matching to provide accurate responses.
+            </p>
+        </div>
+
+        <div class="bg-[#393E46] p-8 rounded-2xl
+                    border border-[#00ADB5]/20
+                    hover:border-[#00ADB5]/60
+                    shadow-lg transition text-center">
+            <i data-lucide="book-open"
+               class="w-12 h-12 mx-auto mb-4
+                      text-[#00ADB5] icon-hover"></i>
+            <h3 class="text-xl font-semibold mb-2">
+                Self-Learning
+            </h3>
+            <p class="text-gray-300">
+                Learns new answers and stores them for future conversations.
+            </p>
+        </div>
+
+        <div class="bg-[#393E46] p-8 rounded-2xl
+                    border border-[#00ADB5]/20
+                    hover:border-[#00ADB5]/60
+                    shadow-lg transition text-center">
+            <i data-lucide="zap"
+               class="w-12 h-12 mx-auto mb-4
+                      text-[#00ADB5] icon-hover"></i>
+            <h3 class="text-xl font-semibold mb-2">
+                Fast Responses
+            </h3>
+            <p class="text-gray-300">
+                Previously learned answers are delivered instantly.
+            </p>
+        </div>
+
+    </div>
+</section>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section class="py-24 bg-[#393E46]
+                border border-[#00ADB5]/25
+                rounded-3xl">
+
+    <h2 class="text-3xl md:text-4xl font-bold text-center mb-16">
+        How It Works
+    </h2>
+
+    <div class="grid md:grid-cols-3 gap-14 text-center max-w-6xl mx-auto">
+
+        <div class="border border-[#00ADB5]/20 rounded-xl p-6">
+            <i data-lucide="help-circle"
+               class="w-14 h-14 mx-auto mb-4
+                      text-[#00ADB5] icon-hover"></i>
+            <h4 class="font-semibold text-lg mb-2">
+                Ask Anything
+            </h4>
+            <p class="text-gray-300">
+                Users ask questions in natural language.
+            </p>
+        </div>
+
+        <div class="border border-[#00ADB5]/20 rounded-xl p-6">
+            <i data-lucide="cpu"
+               class="w-14 h-14 mx-auto mb-4
+                      text-[#00ADB5] icon-hover"></i>
+            <h4 class="font-semibold text-lg mb-2">
+                AI Understands
+            </h4>
+            <p class="text-gray-300">
+                NLP and vector matching analyze the query.
+            </p>
+        </div>
+
+        <div class="border border-[#00ADB5]/20 rounded-xl p-6">
+            <i data-lucide="check-circle"
+               class="w-14 h-14 mx-auto mb-4
+                      text-[#00ADB5] icon-hover"></i>
+            <h4 class="font-semibold text-lg mb-2">
+                Smart Reply
+            </h4>
+            <p class="text-gray-300">
+                The AI answers and learns for next time.
+            </p>
+        </div>
+
+    </div>
+</section>
+
+<!-- ================= FINAL CTA ================= -->
+<section class="py-24 text-center">
+
+    <div class="inline-block
+                bg-[#393E46]
+                border-2 border-[#00ADB5]/40
+                rounded-3xl p-16">
+
+        <h2 class="text-3xl md:text-4xl font-bold mb-6">
+            Ready to Experience Smart Conversations?
+        </h2>
+
+        <p class="text-gray-300 mb-10">
+            Start chatting with an AI that grows smarter with every question.
+        </p>
+
+        <a href="{% url 'chat' %}"
+           class="inline-flex items-center gap-3
+                  px-10 py-4 rounded-xl
+                  bg-[#00ADB5] text-black
+                  font-semibold shadow-lg
+                  border border-[#00ADB5]
+                  hover:bg-[#00c7d1] transition">
+            <i data-lucide="rocket"
+               class="w-5 h-5 icon-hover"></i>
+            Chat Now
+        </a>
+
+    </div>
+</section>
+
+<!-- ================= JAVASCRIPT ================= -->
+<script>
+const words = ["learns.", "responds.", "remembers."];
+let wordIndex = 0;
+let charIndex = 0;
+const typingEl = document.getElementById("typing-text");
+
+function typeEffect() {
+    if (charIndex < words[wordIndex].length) {
+        typingEl.textContent += words[wordIndex][charIndex];
+        charIndex++;
+        setTimeout(typeEffect, 90);
+    } else {
+        setTimeout(eraseEffect, 1400);
+    }
+}
+
+function eraseEffect() {
+    if (charIndex > 0) {
+        typingEl.textContent =
+            words[wordIndex].substring(0, charIndex - 1);
+        charIndex--;
+        setTimeout(eraseEffect, 60);
+    } else {
+        wordIndex = (wordIndex + 1) % words.length;
+        setTimeout(typeEffect, 400);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", typeEffect);
+</script>
+
+{% endblock %}
